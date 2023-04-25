@@ -79,26 +79,26 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
          
     # start a new wandb run to track this script
-    # wandb.init(
-    #     # set the wandb project where this run will be logged
-    #     project="mask-classification",
-
-    #     # track hyperparameters and run metadata
-    #     config={
-    #     "learning_rate": args.lr,
-    #     "architecture": args.model,
-    #     "epochs": args.epochs,
-    #     "batch_size" : args.batch_size,
-    #     "loss" : args.criterion,
-    #     "how": args.how,
-    #     },
-    #     name=f"{args.model}_{args.criterion}_resize{args.resize}_crop[]_lr[{args.lr}]"
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="cv16-wallpaper",
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": CFG['LEARNING_RATE'],
+        "architecture": CFG['MODEL'],
+        "epochs": CFG['EPOCHS'],
+        "batch_size" : CFG['BATCH_SIZE'],
+        "loss" : CFG['CRITERION'],
+        "optimizer": CFG['OPTIMIZER'],
+        },
+        name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
+    )
 
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
-    
+    criterion = CFG['CRITERION']
     # project_idx = len(glob('/workspace/models/*')) + 1
     # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
     
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[loss{best_loss:.4f}].pt'))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}].pt'))
