@@ -1,0 +1,5 @@
+/data
+*.png
+*.jpg
+*.bmp
+set_path.py
