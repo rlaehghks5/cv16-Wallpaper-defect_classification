@@ -15,7 +15,7 @@ class CustomTrainer():
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.criterion = criterion
-        self.device = device 
+        self.device = device
     
     def train(self):
         self.model.to(self.device)
