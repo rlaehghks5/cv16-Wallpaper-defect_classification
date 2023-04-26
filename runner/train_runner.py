@@ -2,6 +2,7 @@ import wandb
 import torch
 import numpy as np
 from tqdm.auto import tqdm
+import time
 
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
@@ -21,6 +22,8 @@ class CustomTrainer():
         self.device = device
     
     def train(self):
+        # scaler = torch.cuda.amp.GradScaler()
+        # start_time = time.process_time()
         self.model.to(self.device)
 
         best_val_loss = np.inf
@@ -53,6 +56,20 @@ class CustomTrainer():
                     output = self.model(imgs)
                     loss = self.criterion(output, labels)
 
+                # with torch.cuda.amp.autocast():
+                    
+                #     output = self.model(imgs)
+                #     loss = self.criterion(output, labels)
+                # scaler.scale(loss).backward()
+                # scaler.step(self.optimizer)
+                # scaler.update()
+                
+
+
+
+                output = self.model(imgs)
+                loss = self.criterion(output, labels)
+
                 loss.backward()
                 self.optimizer.step()
 
@@ -77,7 +94,9 @@ class CustomTrainer():
                 patience += 1
                 if patience >= patience_limit:
                     break
-
+        # end_time = time.process_time()
+        # print(f"time elapsed : {int(round((end_time - start_time) * 1000))}ms")
+        
         print(f'Best Loss : [{best_val_loss:.5f}] Best ACC : [{best_val_score:.5f}]')
         return best_model, best_val_score, best_val_loss, 
 

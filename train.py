@@ -114,5 +114,9 @@ if __name__ == '__main__':
     model_name = CFG['MODEL']
     criterion = CFG['CRITERION']
     
+    lr = CFG['LEARNING_RATE']
+    # project_idx = len(glob('/workspace/models/*')) + 1
+    # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
+    
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]_score[{best_score:.4f}]_loss[{best_loss:.4f}].pt"))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}]_[{lr}].pt'))
