@@ -67,11 +67,11 @@ def inference(model_pt_dir, output_dir,saved_name):
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
     
-    model_pt_dir = f'{MODEL_SAVE_PATH}/[vit_base_patch32_384]_[score0.7943]_[loss4.3232].pt'
+    model_pt_dir = f'{MODEL_SAVE_PATH}/[efficientnet_b3_cross_entropy_AdamW_lr[0.0005]]_[score0.8286]_[loss0.5731].pt'
     
     output_dir = SUBMIT_SAVE_PATH
     
-    saved_name = f'{model_name}_base.csv'
+    saved_name = f'{model_name}_5e4.csv'
     os.makedirs(output_dir, exist_ok=True)
 
     inference(model_pt_dir, output_dir, saved_name)
