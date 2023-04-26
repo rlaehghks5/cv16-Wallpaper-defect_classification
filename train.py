@@ -92,14 +92,15 @@ if __name__ == '__main__':
         "loss" : CFG['CRITERION'],
         "optimizer": CFG['OPTIMIZER'],
         },
+        
         name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
     )
 
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
-    
+    criterion = CFG['CRITERION']
     # project_idx = len(glob('/workspace/models/*')) + 1
     # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
     
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[loss{best_loss:.4f}].pt'))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}].pt'))
