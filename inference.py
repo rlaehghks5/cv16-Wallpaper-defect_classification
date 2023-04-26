@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 
 import pandas as pd
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from dataset import CustomDataset
@@ -17,7 +18,8 @@ def load_model(saved_model, num_classes, device):
     model_cls = getattr(import_module("runner.model"), 'TimmModel')
     model = model_cls(
                 CFG['MODEL'], num_classes=num_classes, pretrained=True
-                )
+                ).to(device)
+    model = nn.DataParallel(model)
     model.load_state_dict(torch.load(saved_model, map_location=device))
     return model
 
@@ -28,11 +30,11 @@ def inference(model_pt_dir, output_dir,saved_name):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     num_classes = 19
-    model = load_model(model_pt_dir, num_classes, device).to(device)
+    model = load_model(model_pt_dir, num_classes, device).to(device)    
     model.eval()
 
     train_df = pd.read_csv(TRAIN_CSV_PATH)
-    train_df['filename'] = train_df['filename'].apply(lambda x : os.path.join('./Data/Training_whole/PNG', x))
+    train_df['filename'] = train_df['filename'].apply(lambda x : os.path.join(TRAIN_IMG_FOLDER_PATH, x))
     
     le = preprocessing.LabelEncoder()
     train_df['label'] = le.fit_transform(train_df['label'])
@@ -62,12 +64,13 @@ def inference(model_pt_dir, output_dir,saved_name):
     submit.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 
-if __name__ == '__main__':
-    
+if __name__ == '__main__':    
     model_name = CFG['MODEL']
     
-    model_pt_dir = f'/opt/ml/Wallpaper-defect_classification/models/[vit_base_patch16_224]_[score0.8078]_[loss0.6596].pt'
-    output_dir = SUBMIT_SAVE_PATH    
+    model_pt_dir = f'{MODEL_SAVE_PATH}/[vit_base_patch32_384]_[score0.7943]_[loss4.3232].pt'
+    
+    output_dir = SUBMIT_SAVE_PATH
+    
     saved_name = f'{model_name}_base.csv'
     os.makedirs(output_dir, exist_ok=True)
 
