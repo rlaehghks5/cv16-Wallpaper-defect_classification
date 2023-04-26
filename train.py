@@ -25,7 +25,7 @@ import wandb
 from utils_.set_path import *
 from utils_.set_seed import seed_everything
 from utils_.loss import create_criterion
-# from utils_.get_class_weight import calc_class_weight
+from utils_.get_class_weight import calc_class_weight
 from runner.model import TimmModel
 from runner.train_runner import CustomTrainer
 from dataset import CustomDataset
@@ -56,8 +56,8 @@ def main(device, num_classes):
     model = TimmModel(CFG['MODEL'], num_classes=num_classes, pretrained=True).to(device)
     model = nn.DataParallel(model)
     
-    # class_weight = calc_class_weight(train_dataset, model_name, num_classes, device)
-    criterion = create_criterion(CFG['CRITERION'])
+    class_weight = calc_class_weight(train, num_classes, device)
+    criterion = create_criterion(CFG['CRITERION'], classes=num_classes)
     optimizer = getattr(import_module("torch.optim"), CFG['OPTIMIZER'])(
                                 filter(lambda p: p.requires_grad, model.parameters()),
                                 lr=CFG['LEARNING_RATE'],
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     wandb.init(
         # set the wandb project where this run will be logged
         project="cv16-wallpaper",
+
         # track hyperparameters and run metadata
         config={
         "learning_rate": CFG['LEARNING_RATE'],
@@ -91,6 +92,7 @@ if __name__ == '__main__':
         "loss" : CFG['CRITERION'],
         "optimizer": CFG['OPTIMIZER'],
         },
+        
         name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
     )
 

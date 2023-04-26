@@ -23,12 +23,14 @@ class CustomTrainer():
         best_val_loss = np.inf
         best_val_score = 0
         best_model = None
-        # best_train_loss = 0
+
         # Early Stop
         patience_limit = self.CFG['PATIENCE']
         patience = 0
+        
         for epoch in range(1, self.CFG['EPOCHS']+1):
             self.model.train()
+            
             train_loss = []
             
             lr = self.optimizer.param_groups[0]['lr']
@@ -53,7 +55,7 @@ class CustomTrainer():
 
             print(f'Epoch [{epoch}], Train Loss : [{_train_loss:.5f}] Val Loss : [{_val_loss:.5f}] Val ACC : [{_val_acc:.5f}]')
             print(' ')
-            # wandb.log({f"Epoch": epoch, f"Train_Loss": _train_loss, f"Val_Loss": _val_loss, f"Val_ACC": _val_acc})
+            wandb.log({f"Epoch": epoch, f"Train_Loss": _train_loss, f"Val_Loss": _val_loss, f"Val_ACC": _val_acc})
 
             if self.scheduler is not None:
                 self.scheduler.step(_val_loss)
