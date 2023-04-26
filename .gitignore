@@ -1,14 +1,13 @@
 data/
 wandb/
 models/
-/data
-/wandb
-/models
+
 *.png
 *.jpg
 *.bmp
 *.csv
 *.pyc
 *.pt
+
 config.py
 set_path.py
