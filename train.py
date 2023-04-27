@@ -37,13 +37,28 @@ def main(device, num_classes):
     torch.cuda.empty_cache() # gpu 자원관리
 
     train_df = pd.read_csv(TRAIN_CSV_PATH)
+    
+    #-- Preprocess    
+    # 오염 to 녹오염
+    OtoN = ["오염_8.png", "오염_13.png", "오염_54.png", "오염_68.png", "오염_151.png", "오염_191.png", "오염_267.png", "오염_270.png", "오염_537.png"]
+    OtoN_index = sorted([train_df[train_df['filename']==on].index[0] for on in OtoN])
+    for on_idx in OtoN_index:
+        train_df.loc[on_idx, 'label'] = '녹오염'
+
+    # 녹오염 to 피스
+    NtoP = ["녹오염_0.png", "녹오염_5.png"]
+    NtoP_index = sorted([train_df[train_df['filename']==np].index[0] for np in NtoP])
+    for np_idx in NtoP_index:
+        train_df.loc[np_idx, 'label'] = '피스'
+
     train_df['filename'] = train_df['filename'].apply(lambda x : os.path.join(TRAIN_IMG_FOLDER_PATH, x))
 
     le = preprocessing.LabelEncoder()
     train_df['label'] = le.fit_transform(train_df['label'])
     
+    #-- Data Split
     train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.2, stratify=train_df['label'], random_state=CFG['SEED'])
-  
+    
     print('='*25, f' Model Train Start', '='*25)
     
     # -- dataset & dataloader
@@ -57,14 +72,14 @@ def main(device, num_classes):
     model = nn.DataParallel(model)
     
     class_weight = calc_class_weight(train, num_classes, device)
-    criterion = create_criterion(CFG['CRITERION'], classes=num_classes)
+    criterion = create_criterion(CFG['CRITERION'])
     optimizer = getattr(import_module("torch.optim"), CFG['OPTIMIZER'])(
                                 filter(lambda p: p.requires_grad, model.parameters()),
                                 lr=CFG['LEARNING_RATE'],
                                 weight_decay=5e-4
                             )    
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, threshold_mode='abs', min_lr=1e-9, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, threshold_mode='abs', min_lr=1e-9, verbose=True)
     trainer = CustomTrainer(CFG=CFG, model=model, train_dataloader=train_loader, valid_dataloader=val_loader, optimizer=optimizer, scheduler=scheduler, criterion=criterion, device=device)
     
     model, best_score, best_loss = trainer.train()
@@ -99,8 +114,6 @@ if __name__ == '__main__':
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
     criterion = CFG['CRITERION']
-    # project_idx = len(glob('/workspace/models/*')) + 1
-    # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
     
     model, best_score, best_loss = main(device, num_classes=19)
     torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}].pt'))

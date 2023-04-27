@@ -58,13 +58,12 @@ class CustomTrainer():
             wandb.log({f"Epoch": epoch, f"Train_Loss": _train_loss, f"Val_Loss": _val_loss, f"Val_ACC": _val_acc})
 
             if self.scheduler is not None:
-                self.scheduler.step(_val_loss)
+                self.scheduler.step(_val_acc)
 
-            if best_val_loss > _val_loss:
+            if best_val_score < _val_acc:
                 best_val_loss = _val_loss
                 best_val_score = _val_acc
                 best_model = self.model
-                # best_train_loss = _train_loss
                 patience = 0
             else:
                 patience += 1
