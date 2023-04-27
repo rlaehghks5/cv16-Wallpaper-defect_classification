@@ -65,6 +65,10 @@ def inference(model_pt_dir, output_dir,saved_name):
     submit.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 
+
+######################### model_pt_dir, saved_name 변경.
+
+
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
 

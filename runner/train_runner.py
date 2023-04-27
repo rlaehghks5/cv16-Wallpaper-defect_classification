@@ -20,7 +20,24 @@ class CustomTrainer():
         self.scheduler = scheduler
         self.criterion = criterion
         self.device = device
-    
+    def rand_bbox(self, size, lam): # # 64, 3, H, W, lambda
+        W = size[2]
+        H = size[3]
+
+        cut_rat = np.sqrt(1. - lam) # cut 비율
+        cut_w = np.int(W * cut_rat) # 전체 넓이, 높이 중 비율만큼 선택
+        cut_h = np.int(H * cut_rat)
+
+        # uniform
+        cx = np.random.randint(W)
+        cy = np.random.randint(H)
+
+        bbx1 = np.clip(cx - cut_w // 2, 0, W)
+        bby1 = np.clip(cy - cut_h // 2, 0, H)
+        bbx2 = np.clip(cx + cut_w // 2, 0, W)
+        bby2 = np.clip(cy + cut_h // 2, 0, H)
+
+        return bbx1, bby1, bbx2, bby2
     def train(self):
         # scaler = torch.cuda.amp.GradScaler()
         # start_time = time.process_time()
@@ -64,7 +81,20 @@ class CustomTrainer():
                 # scaler.step(self.optimizer)
                 # scaler.update()
                 
-
+                r = np.random.rand(1)
+                if r < 0.5:
+                    lam = np.random.beta(4.0, 2.0)
+                    rand_index = torch.randperm(imgs.size()[0]).cuda()
+                    label_a = labels
+                    label_b = labels[rand_index]
+                    bbx1, bby1, bbx2, bby2 = self.rand_bbox(imgs.size(), lam)
+                    imgs[:, :, bbx1:bbx2, bby1:bby2] = imgs[rand_index, :, bbx1:bbx2, bby1:bby2]
+                    lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (imgs.size()[-1] * imgs.size()[-2]))
+                    outs = self.model(imgs)
+                    loss = self.criterion(outs, label_a) * lam + self.criterion(outs, label_b) * (1. - lam)
+                else:
+                    outs = self.model(imgs)
+                    loss = self.criterion(outs, labels)
 
 
                 output = self.model(imgs)
