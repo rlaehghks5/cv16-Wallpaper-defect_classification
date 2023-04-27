@@ -20,7 +20,7 @@ def load_model(saved_model, num_classes, device):
     model = model_cls(
                 CFG['MODEL'], num_classes=num_classes, pretrained=True
                 ).to(device)
-    model = nn.DataParallel(model)
+    model = nn.DataParallel(model) # 해줘야 .module 이 사라지구나
     model.load_state_dict(torch.load(saved_model, map_location=device))
     return model
 
@@ -41,7 +41,7 @@ def inference(model_pt_dir, output_dir,saved_name):
     train_df['label'] = le.fit_transform(train_df['label'])
 
     test = pd.read_csv(TEST_CSV_PATH)
-    test['img_path'] = test['img_path'].apply(lambda x : os.path.join('./data', '/'.join(x.split('/')[1:])))
+    test['img_path'] = test['img_path'].apply(lambda x : os.path.join(TEST_IMG_PATH, '/'.join(x.split('/')[1:])))
     
     test_dataset = CustomDataset(test['img_path'].values, None, transforms=False, CFG=CFG)
     test_loader = DataLoader(test_dataset, batch_size=CFG['BATCH_SIZE'], shuffle=False, num_workers=4, drop_last= False)
@@ -64,6 +64,10 @@ def inference(model_pt_dir, output_dir,saved_name):
     save_path = os.path.join(output_dir, f'{saved_name}')
     submit.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
+
+
+######################### model_pt_dir, saved_name 변경.
+
 
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
