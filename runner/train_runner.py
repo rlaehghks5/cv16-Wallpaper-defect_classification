@@ -65,24 +65,14 @@ class CustomTrainer():
 
                 self.optimizer.zero_grad()
                 
-                if self.CFG['MIXUP'] and (idx + 1) % 3 == 0:
+                if self.CFG['MIXUP'] and (idx + 1) % 2 == 1:
                     imgs, labels_a, labels_b, lambda_ = MixUp(imgs, labels)
                     output = self.model(imgs)
                     loss = MixUpLoss(self.criterion, pred=output, y_a=labels_a, y_b=labels_b, lambda_=lambda_)
-                else:                    
-                    output = self.model(imgs)
-                    loss = self.criterion(output, labels)
-
-                # with torch.cuda.amp.autocast():
-                    
+                # else:                    
                 #     output = self.model(imgs)
                 #     loss = self.criterion(output, labels)
-                # scaler.scale(loss).backward()
-                # scaler.step(self.optimizer)
-                # scaler.update()
-                
-                r = np.random.rand(1)
-                if r < 0.5:
+                if self.CFG['CUTMIX'] and (idx + 1) % 2 == 0:
                     lam = np.random.beta(4.0, 2.0)
                     rand_index = torch.randperm(imgs.size()[0]).cuda()
                     label_a = labels
@@ -92,13 +82,10 @@ class CustomTrainer():
                     lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (imgs.size()[-1] * imgs.size()[-2]))
                     outs = self.model(imgs)
                     loss = self.criterion(outs, label_a) * lam + self.criterion(outs, label_b) * (1. - lam)
-                else:
-                    outs = self.model(imgs)
-                    loss = self.criterion(outs, labels)
+                # else:
+                #     outs = self.model(imgs)
+                #     loss = self.criterion(outs, labels)
 
-
-                output = self.model(imgs)
-                loss = self.criterion(output, labels)
 
                 loss.backward()
                 self.optimizer.step()
