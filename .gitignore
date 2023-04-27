@@ -1,6 +1,8 @@
 data/
 wandb/
 models/
+submits/
+
 
 *.pyc
 __pycache__

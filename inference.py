@@ -67,12 +67,14 @@ def inference(model_pt_dir, output_dir,saved_name):
 
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
+
     weight_name = 'efficientnet_b3_MIXUP:True_cross_entropy_AdamW_lr[0.0005]_score[0.8322]_loss[0.6032].pt'
     model_pt_dir = f'{MODEL_SAVE_PATH}/{weight_name}'
     
     output_dir = SUBMIT_SAVE_PATH
     
     saved_name = f'{weight_name}.csv'
+
     os.makedirs(output_dir, exist_ok=True)
 
     inference(model_pt_dir, output_dir, saved_name)

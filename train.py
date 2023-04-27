@@ -37,11 +37,25 @@ def main(device, num_classes):
     torch.cuda.empty_cache() # gpu 자원관리
 
     train_df = pd.read_csv(TRAIN_CSV_PATH)
+    
+    #-- Preprocess    
+    # 오염 to 녹오염
+    OtoN = ["오염_8.png", "오염_13.png", "오염_54.png", "오염_68.png", "오염_151.png", "오염_191.png", "오염_267.png", "오염_270.png", "오염_537.png"]
+    OtoN_index = sorted([train_df[train_df['filename']==on].index[0] for on in OtoN])
+    for on_idx in OtoN_index:
+        train_df.loc[on_idx, 'label'] = '녹오염'
+
+    # 녹오염 to 피스
+    NtoP = ["녹오염_0.png", "녹오염_5.png"]
+    NtoP_index = sorted([train_df[train_df['filename']==np].index[0] for np in NtoP])
+    for np_idx in NtoP_index:
+        train_df.loc[np_idx, 'label'] = '피스'
+
     train_df['filename'] = train_df['filename'].apply(lambda x : os.path.join(TRAIN_IMG_FOLDER_PATH, x))
 
     le = preprocessing.LabelEncoder()
     train_df['label'] = le.fit_transform(train_df['label'])
-    
+
     train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.3, stratify=train_df['label'], random_state=CFG['SEED'])
   
     print('='*25, f' Model Train Start', '='*25)
