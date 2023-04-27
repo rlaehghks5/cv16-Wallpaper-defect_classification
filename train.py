@@ -42,7 +42,7 @@ def main(device, num_classes):
     le = preprocessing.LabelEncoder()
     train_df['label'] = le.fit_transform(train_df['label'])
     
-    train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.2, stratify=train_df['label'], random_state=CFG['SEED'])
+    train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.3, stratify=train_df['label'], random_state=CFG['SEED'])
   
     print('='*25, f' Model Train Start', '='*25)
     
@@ -57,14 +57,14 @@ def main(device, num_classes):
     model = nn.DataParallel(model)
     
     class_weight = calc_class_weight(train, num_classes, device)
-    criterion = create_criterion(CFG['CRITERION'], classes=num_classes)
+    criterion = create_criterion(CFG['CRITERION'])
     optimizer = getattr(import_module("torch.optim"), CFG['OPTIMIZER'])(
                                 filter(lambda p: p.requires_grad, model.parameters()),
                                 lr=CFG['LEARNING_RATE'],
                                 weight_decay=5e-4
                             )    
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, threshold_mode='abs', min_lr=1e-9, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, threshold_mode='abs', min_lr=1e-9, verbose=True)
     trainer = CustomTrainer(CFG=CFG, model=model, train_dataloader=train_loader, valid_dataloader=val_loader, optimizer=optimizer, scheduler=scheduler, criterion=criterion, device=device)
     
     model, best_score, best_loss = trainer.train()
@@ -93,14 +93,12 @@ if __name__ == '__main__':
         "optimizer": CFG['OPTIMIZER'],
         },
         
-        name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
+        name=f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
     )
-
+    
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
     criterion = CFG['CRITERION']
-    # project_idx = len(glob('/workspace/models/*')) + 1
-    # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
     
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}].pt'))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]_score[{best_score:.4f}]_loss[{best_loss:.4f}].pt"))

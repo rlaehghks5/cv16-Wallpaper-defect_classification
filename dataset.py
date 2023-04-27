@@ -10,7 +10,8 @@ def get_transform(transforms, CFG):
     if transforms:
         transform = A.Compose([
                             A.Resize(CFG['IMG_SIZE'],CFG['IMG_SIZE']),
-                            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=False, p=1.0),
+                            A.HorizontalFlip(p=0.5),
+                            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=False, p=1.0),                            
                             ToTensorV2()
                             ])
 

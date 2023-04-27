@@ -2,6 +2,7 @@ import argparse
 import multiprocessing
 import os
 from importlib import import_module
+from tqdm.auto import tqdm
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
@@ -49,7 +50,7 @@ def inference(model_pt_dir, output_dir,saved_name):
     
     preds = []
     with torch.no_grad():
-        for _, images in enumerate(test_loader):
+        for images in tqdm(iter(test_loader), bar_format='{l_bar}{bar:50}{r_bar}{bar:-10b}'):
             images = images.to(device)
             pred = model(images)
             pred = pred.argmax(dim=-1)
@@ -66,12 +67,12 @@ def inference(model_pt_dir, output_dir,saved_name):
 
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
-    
-    model_pt_dir = f'{MODEL_SAVE_PATH}/[vit_base_patch32_384]_[score0.7943]_[loss4.3232].pt'
+    weight_name = 'efficientnet_b3_MIXUP:True_cross_entropy_AdamW_lr[0.0005]_score[0.8322]_loss[0.6032].pt'
+    model_pt_dir = f'{MODEL_SAVE_PATH}/{weight_name}'
     
     output_dir = SUBMIT_SAVE_PATH
     
-    saved_name = f'{model_name}_base.csv'
+    saved_name = f'{weight_name}.csv'
     os.makedirs(output_dir, exist_ok=True)
 
     inference(model_pt_dir, output_dir, saved_name)
