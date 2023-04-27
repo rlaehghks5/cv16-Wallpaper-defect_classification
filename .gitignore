@@ -4,14 +4,15 @@ models/
 submits/
 
 
-**/__pycache__/
-**/__pycache__
+*.pyc
+__pycache__
+__pycache__/
+*.py[cod]
 
 *.png
 *.jpg
 *.bmp
 *.csv
-*.pyc
 *.pt
 
 config.py

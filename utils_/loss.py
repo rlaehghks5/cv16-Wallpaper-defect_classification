@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import numpy as np
+from config import CFG
+
 # Focal Loss
 # https://discuss.pytorch.org/t/is-this-a-correct-implementation-for-focal-loss-in-pytorch/43327/8
 class FocalLoss(nn.Module):
@@ -63,14 +66,16 @@ class F1Loss(nn.Module):
         f1 = 2 * (precision * recall) / (precision + recall + self.epsilon)
         f1 = f1.clamp(min=self.epsilon, max=1 - self.epsilon)
         return 1 - f1.mean()
+
+def MixUpLoss(criterion, pred, y_a, y_b, lambda_):
+    return lambda_ * criterion(pred, y_a) + (1 - lambda_) * criterion(pred, y_b)
     
 _criterion_entrypoints = {
     'cross_entropy': nn.CrossEntropyLoss,
     'focal': FocalLoss,
     'label_smoothing': LabelSmoothingLoss,
-    'f1': F1Loss
+    'f1': F1Loss,
 }
-
 
 def criterion_entrypoint(criterion_name):
     return _criterion_entrypoints[criterion_name]

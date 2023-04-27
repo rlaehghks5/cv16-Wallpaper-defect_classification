@@ -6,6 +6,9 @@ from tqdm.auto import tqdm
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
 
+from utils_.mixup import MixUp
+from utils_.loss import MixUpLoss
+
 class CustomTrainer():
     def __init__(self, CFG, model, train_dataloader, valid_dataloader, optimizer, scheduler, criterion, device):
         self.CFG = CFG
@@ -36,14 +39,19 @@ class CustomTrainer():
             lr = self.optimizer.param_groups[0]['lr']
             print('='*25, f'TRAIN epoch:{epoch}', '='*25, f'lr:{lr:.9f}')
             
-            for imgs, labels in tqdm(iter(self.train_dataloader), bar_format='{l_bar}{bar:50}{r_bar}{bar:-10b}'):
+            for idx, (imgs, labels) in enumerate(tqdm(iter(self.train_dataloader), bar_format='{l_bar}{bar:50}{r_bar}{bar:-10b}')):
                 imgs = imgs.float().to(self.device)
                 labels = labels.to(self.device)
 
                 self.optimizer.zero_grad()
-
-                output = self.model(imgs)
-                loss = self.criterion(output, labels)
+                
+                if self.CFG['MIXUP'] and (idx + 1) % 3 == 0:
+                    imgs, labels_a, labels_b, lambda_ = MixUp(imgs, labels)
+                    output = self.model(imgs)
+                    loss = MixUpLoss(self.criterion, pred=output, y_a=labels_a, y_b=labels_b, lambda_=lambda_)
+                else:                    
+                    output = self.model(imgs)
+                    loss = self.criterion(output, labels)
 
                 loss.backward()
                 self.optimizer.step()

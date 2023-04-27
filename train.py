@@ -55,10 +55,9 @@ def main(device, num_classes):
 
     le = preprocessing.LabelEncoder()
     train_df['label'] = le.fit_transform(train_df['label'])
-    
-    #-- Data Split
-    train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.2, stratify=train_df['label'], random_state=CFG['SEED'])
-    
+
+    train, val, _, _ = train_test_split(train_df, train_df['label'], test_size=0.3, stratify=train_df['label'], random_state=CFG['SEED'])
+  
     print('='*25, f' Model Train Start', '='*25)
     
     # -- dataset & dataloader
@@ -108,12 +107,12 @@ if __name__ == '__main__':
         "optimizer": CFG['OPTIMIZER'],
         },
         
-        name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
+        name=f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]"
     )
-
+    
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
     criterion = CFG['CRITERION']
     
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}].pt'))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]_score[{best_score:.4f}]_loss[{best_loss:.4f}].pt"))
