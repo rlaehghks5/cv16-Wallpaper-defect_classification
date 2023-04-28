@@ -68,7 +68,10 @@ class F1Loss(nn.Module):
         return 1 - f1.mean()
 
 def MixUpLoss(criterion, pred, y_a, y_b, lambda_):
-    return lambda_ * criterion(pred, y_a) + (1 - lambda_) * criterion(pred, y_b)
+    return lambda_ * criterion(pred, y_a) + (1. - lambda_) * criterion(pred, y_b)
+
+def CutMixLoss(criterion, pred, y_a, y_b, lambda_):
+    return lambda_ * criterion(pred, y_a) + (1. - lambda_) * criterion(pred, y_b)
     
 _criterion_entrypoints = {
     'cross_entropy': nn.CrossEntropyLoss,

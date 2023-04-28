@@ -1,14 +1,17 @@
+import time
 import wandb
 import torch
+import random
 import numpy as np
 from tqdm.auto import tqdm
-import time
 
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
 
 from utils_.mixup import MixUp
 from utils_.loss import MixUpLoss
+from utils_.cutmix import CutMix
+from utils_.loss import CutMixLoss
 
 class CustomTrainer():
     def __init__(self, CFG, model, train_dataloader, valid_dataloader, optimizer, scheduler, criterion, device):
@@ -20,24 +23,7 @@ class CustomTrainer():
         self.scheduler = scheduler
         self.criterion = criterion
         self.device = device
-    def rand_bbox(self, size, lam): # # 64, 3, H, W, lambda
-        W = size[2]
-        H = size[3]
-
-        cut_rat = np.sqrt(1. - lam) # cut 비율
-        cut_w = np.int(W * cut_rat) # 전체 넓이, 높이 중 비율만큼 선택
-        cut_h = np.int(H * cut_rat)
-
-        # uniform
-        cx = np.random.randint(W)
-        cy = np.random.randint(H)
-
-        bbx1 = np.clip(cx - cut_w // 2, 0, W)
-        bby1 = np.clip(cy - cut_h // 2, 0, H)
-        bbx2 = np.clip(cx + cut_w // 2, 0, W)
-        bby2 = np.clip(cy + cut_h // 2, 0, H)
-
-        return bbx1, bby1, bbx2, bby2
+ 
     def train(self):
         # scaler = torch.cuda.amp.GradScaler()
         # start_time = time.process_time()
@@ -64,28 +50,20 @@ class CustomTrainer():
                 labels = labels.to(self.device)
 
                 self.optimizer.zero_grad()
-                
-                if self.CFG['MIXUP'] and (idx + 1) % 2 == 1:
-                    imgs, labels_a, labels_b, lambda_ = MixUp(imgs, labels)
-                    output = self.model(imgs)
-                    loss = MixUpLoss(self.criterion, pred=output, y_a=labels_a, y_b=labels_b, lambda_=lambda_)
-                # else:                    
-                #     output = self.model(imgs)
-                #     loss = self.criterion(output, labels)
-                if self.CFG['CUTMIX'] and (idx + 1) % 2 == 0:
-                    lam = np.random.beta(4.0, 2.0)
-                    rand_index = torch.randperm(imgs.size()[0]).cuda()
-                    label_a = labels
-                    label_b = labels[rand_index]
-                    bbx1, bby1, bbx2, bby2 = self.rand_bbox(imgs.size(), lam)
-                    imgs[:, :, bbx1:bbx2, bby1:bby2] = imgs[rand_index, :, bbx1:bbx2, bby1:bby2]
-                    lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (imgs.size()[-1] * imgs.size()[-2]))
-                    outs = self.model(imgs)
-                    loss = self.criterion(outs, label_a) * lam + self.criterion(outs, label_b) * (1. - lam)
-                # else:
-                #     outs = self.model(imgs)
-                #     loss = self.criterion(outs, labels)
 
+                if self.CFG['MIXUP'] and self.CFG['CUTMIX'] and (idx + 1) % 3 == 0:
+                    select = random.choice(['MIXUP', 'CUTMIX'])
+                    if select == 'MIXUP':
+                        imgs, labels_a, labels_b, lambda_ = MixUp(imgs, labels)
+                        output = self.model(imgs)
+                        loss = MixUpLoss(self.criterion, pred=output, y_a=labels_a, y_b=labels_b, lambda_=lambda_)
+                    elif select == 'CUTMIX':
+                        imgs, labels_a, labels_b, lambda_ = CutMix(imgs, labels)
+                        output = self.model(imgs)
+                        loss = CutMixLoss(self.criterion, pred=output, y_a=labels_a, y_b=labels_b, lambda_=lambda_)
+                else:
+                    outs = self.model(imgs)
+                    loss = self.criterion(outs, labels)
 
                 loss.backward()
                 self.optimizer.step()

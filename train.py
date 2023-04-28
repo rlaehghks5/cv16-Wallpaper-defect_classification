@@ -3,20 +3,13 @@ warnings.filterwarnings(action='ignore')
 
 import os
 import gc
-import cv2
-import random
-import argparse
-import numpy as np
 import pandas as pd
 from glob import glob
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
-from tqdm.autonotebook import tqdm
-from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
@@ -107,16 +100,11 @@ if __name__ == '__main__':
         "optimizer": CFG['OPTIMIZER'],
         },
         
-        name=f"{CFG['MODEL']}_MIXUP:{CFG['MIXUP']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]_cutmix_mixup"
+        name=f"{CFG['MODEL']}_{CFG['CRITERION']}_{CFG['OPTIMIZER']}_lr[{CFG['LEARNING_RATE']}]_cutmix[{CFG['C_ALPHA1']},{CFG['C_ALPHA2']}]_mixup[{CFG['M_ALPHA1']},{CFG['M_ALPHA2']}]"
     )
     
     model_save_path = MODEL_SAVE_PATH
     model_name = CFG['MODEL']
-    criterion = CFG['CRITERION']
-    
-    lr = CFG['LEARNING_RATE']
-    # project_idx = len(glob('/workspace/models/*')) + 1
-    # os.makedirs(f'/workspace/models/Project{project_idx}', exist_ok=True)
-    
+
     model, best_score, best_loss = main(device, num_classes=19)
-    torch.save(model.state_dict(), os.path.join(model_save_path, f'[{model_name}]_[score{best_score:.4f}]_[{criterion}{best_loss:.4f}]_[{lr}]_cutmix_mixup.pt'))
+    torch.save(model.state_dict(), os.path.join(model_save_path, f"[{model_name}]_[score{best_score:.4f}]_[loss{best_loss:.4f}]_[lr{CFG['LEARNING_RATE']}]_cutmix_mixup.pt"))
