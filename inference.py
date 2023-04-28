@@ -65,18 +65,13 @@ def inference(model_pt_dir, output_dir,saved_name):
     submit.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 
-
-######################### model_pt_dir, saved_name 변경.
-
-
 if __name__ == '__main__':    
     model_name = CFG['MODEL']
 
-    weight_name = 'efficientnet_b3_MIXUP:True_cross_entropy_AdamW_lr[0.0005]_score[0.8322]_loss[0.6032].pt'
+    #-- weight_name 변경.
+    weight_name = '[efficientnet_b3]_[score0.8392]_[loss0.5511]_[lr0.0005]_cutmix_mixup.pt'
     model_pt_dir = f'{MODEL_SAVE_PATH}/{weight_name}'
-    
-    output_dir = SUBMIT_SAVE_PATH
-    
+    output_dir = SUBMIT_SAVE_PATH    
     saved_name = f'{weight_name}.csv'
 
     os.makedirs(output_dir, exist_ok=True)
